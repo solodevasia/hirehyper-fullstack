@@ -1,0 +1,2 @@
+# hirehyper-fullstack
+Solo Development
