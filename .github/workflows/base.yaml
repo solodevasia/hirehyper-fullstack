@@ -1,0 +1,54 @@
+name: hyperhire
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: v22.11.0
+
+      - name: setup pnpm
+        id: pnpm-install
+        uses: pnpm/action-setup@v4
+        with:
+          version: v9.15.0
+          run_install: false
+
+      - name: get pnpm store path
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: setup cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: install dependencies
+        run: pnpm install -w
+
+      # PNPM
+
+      - name: testing
+        run: pnpm run --parallel -r test
+
+      - name: building
+        run: pnpm run --parallel -r build
